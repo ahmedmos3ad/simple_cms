@@ -1,4 +1,8 @@
 Rails.application.routes.draw do
+
+  resources :subjects do
+  end
+
   root 'demo#index'
   get 'demo/index'
   get 'demo/other_index'

@@ -19,7 +19,31 @@ def default_url_options
   end
 
   def encode_token(payload)
-    JWT.encode(payload,Rails.application.secrets[:secret_key_base])
+    return JWT.encode(payload,Rails.application.secrets[:secret_key_base])
+  end
+
+  def decode_token()
+    auth_header=request.headers['Autherization']
+    if auth_header
+      token = auth_header.split(' ')[1]
+    end
+    begin
+      JWT.decode(token,Rails.application.secrets[:secret_key_base],true)
+    rescue =>e
+      puts e.message
+    end
+  end
+
+  def authorized_user
+    decode_token= decode_token()
+    if decoded_token
+      user_id=decoded_token[0]['user_id']
+      @user = User.find_by!(id:user_id)
+    end
+  end
+
+  def authorize
+    render json:{message:"You aren't logged in"}, status: :unauthorized unless authorized_user
   end
   
 end

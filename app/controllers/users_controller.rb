@@ -1,16 +1,29 @@
 class UsersController < ApplicationController
 
     def create
+        begin
         @user= User.new(user_params)
-        #begin
-            if @user.valid?
+            if @user.save!
                 token=encode_token({user_id:@user.id})
-                #render json:serialize_record("User",@user,params:{token: token}), status: :created
-                render json:UserSerializer.new(@user, params:{token: token}).serializable_hash, status: :created
+                #render json:serialize_record("User", @user,params: {token: token}), status: :created
+                render json:UserSerializer.new(@user,params: {token: token}).serializable_hash[:data][:attributes], status: :created
             end
-        #rescue =>e
-        #render json:e.message, status: :unprocessable_entity
-        #end
+        rescue =>e
+        render json:e.message, status: :unprocessable_entity
+        end
+    end
+    
+    def login
+       begin
+        @user= User.find_by!(username:user_params[:username])
+
+            if @user && @user.authenticate(user_params[:password])
+                token=encode_token({user_id:@user.id})
+                render json:UserSerializer.new(@user,params:{token: token}).serializable_hash[:data][:attributes], status: :ok
+            end
+        rescue => e
+        render json:e.message, status: :unprocessable_entity
+        end
     end
     
     private 

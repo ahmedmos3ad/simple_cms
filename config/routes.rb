@@ -2,9 +2,11 @@ Rails.application.routes.draw do
 
   # resources :subjects do
   # end
-  scope "(:locale)", locale: /en|nl/ do
-    resources :books
+  scope "(:locale)", locale: /en|ar/ do
+    resources :subjects
   end
+
+  resources :users
 
   get '/:locale' => 'demo#index'
   root 'demo#index'

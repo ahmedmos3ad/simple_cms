@@ -2,15 +2,19 @@ class SubjectsController < ApplicationController
   
   def index
     @subjects= Subject.all.order(:id)
-    render json:@subjects
+    #render json:@subjects
+    #render json:SubjectSerializer.new(@subjects).serializable_hash
+    render json:serialize_collection("Subject",@subjects)
   end
 
   def show
-    @subject= Subject.where(id:params[:id])
-    if !@subject.empty?
-      render json:@subject
-    else
-      render plain:"Subject Doesn't Exist", status:404
+    begin
+    @subject= Subject.find(params[:id])
+      #render json:@subject
+      #render json:SubjectSerializer.new(@subject).serializable_hash[:data]
+      render json:serialize_record("Subject",@subject)
+    rescue =>e
+      render json:e.message, status:404
     end
   end
 
@@ -18,7 +22,7 @@ class SubjectsController < ApplicationController
     @subject= Subject.new(subject_params)
     begin
       if @subject.save!
-        redirect_to(subjects_path)
+        render json:serialize_record("Subject",@subject), status: :created
       end
     rescue =>e
       render json:e.message, status:422
@@ -28,9 +32,10 @@ class SubjectsController < ApplicationController
   def update
     begin
       @subject= Subject.find(params[:id])
+      AuthenticationTokenService.call(@subject.id)
       @subject.assign_attributes(subject_params)
       @subject.save!
-      redirect_to(subject_path(@subject))
+      render json:serialize_record("Subject",@subject), status: :ok
     rescue => e
       render json:e.message, status:422
     end
@@ -40,7 +45,8 @@ class SubjectsController < ApplicationController
     begin
       @subject= Subject.find(params[:id])
       @subject.destroy!
-      redirect_to(subjects_path)
+      #redirect_to(subjects_path)
+      render json:"Subject with ID #{@subject.id} has been deleted."
     rescue => e
       render json:e.message, status:422
     end

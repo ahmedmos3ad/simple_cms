@@ -1,34 +1,78 @@
 class UsersController < ApplicationController
 
+    before_action :authorize , only:[:show,:update,:destroy]
+
+    def index
+        @users= User.all.order(:id)
+        render json:serialize_collection("User",@users, {id: true})
+    end
+    
     def create
         begin
         @user= User.new(user_params)
             if @user.save!
                 token=encode_token({user_id:@user.id})
-                #render json:serialize_record("User", @user,params: {token: token}), status: :created
-                render json:UserSerializer.new(@user,params: {token: token}).serializable_hash[:data][:attributes], status: :created
+                render json:serialize_record(User,@user,{token: token}), status: :created
             end
         rescue =>e
         render json:e.message, status: :unprocessable_entity
         end
     end
+
+    def show
+        begin
+            if @user.id == params[:id].to_i
+                render json:serialize_record("User",@user), status: :ok
+            else
+              render json:"Unauthorized", status: :unauthorized
+            end
+        rescue =>e
+          render json:e.message, status: :unprocessable_entity
+        end
+      end
     
     def login
        begin
         @user= User.find_by!(username:user_params[:username])
-
             if @user && @user.authenticate(user_params[:password])
                 token=encode_token({user_id:@user.id})
-                render json:UserSerializer.new(@user,params:{token: token}).serializable_hash[:data][:attributes], status: :ok
+                render json:serialize_record("User",@user,{token: token, id: true}), status: :ok
             end
         rescue => e
-        render json:e.message, status: :unprocessable_entity
+        render json:e.message, status: :unauthorized
         end
     end
+
+    def update
+        begin
+          if @user.id == params[:id].to_i
+             @user.assign_attributes(user_params)
+             @user.save!
+             render json:serialize_record("User",@user), status: :ok
+          else
+             render json:"Unauthorized", status: :unauthorized
+          end
+        rescue => e
+          render json:e.message, status:422
+        end
+      end
+    
+      def destroy
+        begin
+          if @user.id == params[:id].to_i 
+            @user.destroy!
+            render json:"User with ID #{@user.id} has been deleted.", status: :ok
+          else
+            render json:"Unauthorized", status: :unauthorized
+          end
+        rescue => e
+          render json:e.message, status:422
+        end
+      end
     
     private 
 
     def user_params
-     params.require(:user).permit(:username,:password,:password_confirmation)
+        params.require(:user).permit(:username,:password,:password_confirmation)
     end
 end

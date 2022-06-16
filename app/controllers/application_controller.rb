@@ -4,6 +4,8 @@ class ApplicationController < ActionController::Base
   require 'jwt'
   skip_before_action :verify_authenticity_token
   around_action :switch_locale
+
+  ALGO='HS256'
     
 def switch_locale(&action)
   locale = params[:locale] || I18n.default_locale
@@ -19,26 +21,30 @@ def default_url_options
   end
 
   def encode_token(payload)
-    return JWT.encode(payload,Rails.application.secrets[:secret_key_base])
+    return JWT.encode(payload,Rails.application.secrets[:secret_key_base],ALGO)
   end
 
   def decode_token()
-    auth_header=request.headers['Autherization']
+    auth_header=request.headers['Authorization']
     if auth_header
       token = auth_header.split(' ')[1]
     end
     begin
-      JWT.decode(token,Rails.application.secrets[:secret_key_base],true)
+      JWT.decode(token,Rails.application.secrets[:secret_key_base],true,{ algorithm: ALGO })
     rescue =>e
       puts e.message
     end
   end
 
   def authorized_user
-    decode_token= decode_token()
+    decoded_token= decode_token()
     if decoded_token
       user_id=decoded_token[0]['user_id']
-      @user = User.find_by!(id:user_id)
+      begin
+      @user = User.find(user_id)
+      rescue =>e
+        render json: e.message
+      end
     end
   end
 

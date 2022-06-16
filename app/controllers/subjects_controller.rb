@@ -32,7 +32,6 @@ class SubjectsController < ApplicationController
   def update
     begin
       @subject= Subject.find(params[:id])
-      AuthenticationTokenService.call(@subject.id)
       @subject.assign_attributes(subject_params)
       @subject.save!
       render json:serialize_record("Subject",@subject), status: :ok

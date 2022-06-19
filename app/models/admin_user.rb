@@ -1,5 +1,6 @@
 class AdminUser < ApplicationRecord
-    has_and_belongs_to_many :pages
-    has_many :section_edits
-    has_many :sections, through: :section_edits
+  # Include default devise modules. Others available are:
+  # :confirmable, :lockable, :timeoutable, :trackable and :omniauthable
+  devise :database_authenticatable, 
+         :recoverable, :rememberable, :validatable
 end

@@ -7,12 +7,12 @@ class ApplicationController < ActionController::Base
 
   ALGO='HS256'
     
-def switch_locale(&action)
-  locale = params[:locale] || I18n.default_locale
-  I18n.with_locale(locale, &action)
-end
+  def switch_locale(&action)
+   locale = params[:locale] || I18n.default_locale
+   I18n.with_locale(locale, &action)
+  end
 
-def default_url_options
+  def default_url_options
     { locale: I18n.locale }
   end
 
@@ -25,7 +25,7 @@ def default_url_options
   end
 
   def decode_token()
-    auth_header=request.headers['Authorization']
+    auth_header=request.headers[:Authorization]
     if auth_header
       token = auth_header.split(' ')[1]
     end
@@ -40,8 +40,13 @@ def default_url_options
     decoded_token= decode_token()
     if decoded_token
       user_id=decoded_token[0]['user_id']
+      @decoded=true
+    elsif !params[:id].nil?
+      user_id=params[:id]
+    end
+    if user_id
       begin
-      @user = User.find(user_id)
+        @user = User.find(user_id)
       rescue =>e
         render json: e.message
       end
@@ -49,7 +54,7 @@ def default_url_options
   end
 
   def authorize
-    render json:{message:"You aren't logged in"}, status: :unauthorized unless authorized_user
+    render json:@message? @message : "Unauthorized", status: :unauthorized unless authorized_user
   end
   
 end

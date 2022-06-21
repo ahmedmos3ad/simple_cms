@@ -4,3 +4,10 @@
 require_relative "config/application"
 
 Rails.application.load_tasks
+
+begin
+    require "vlad"
+    Vlad.load(:app => nil, :scm => "git")
+  rescue LoadError
+    # do nothing
+  end
